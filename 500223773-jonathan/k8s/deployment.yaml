@@ -16,4 +16,4 @@ spec:
       - name: myapp
         image: my-python-app:latest
         ports:
-        - containerPort: 5060
+        - containerPort: 5050
