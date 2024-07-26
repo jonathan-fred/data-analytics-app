@@ -1,25 +1,36 @@
 ---
 - hosts: all
+  become: true
   tasks:
     - name: Update apt repository cache
       apt:
         update_cache: yes
 
-    - name: Install Docker
+    - name: Remove conflicting containerd package
       apt:
-        name: docker.io
-        state: present
+        name: containerd
+        state: absent
+      ignore_errors: yes
 
-    - name: Install Minikube dependencies
+    - name: Remove existing Docker packages
       apt:
-        name: "{{ item }}"
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+      ignore_errors: yes
+
+    - name: Install Docker dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
         state: present
-      loop:
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - software-properties-common
-        - conntrack
 
     - name: Add Docker’s official GPG key
       shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -31,18 +42,3 @@
       apt:
         name: docker-ce
         state: present
-
-    - name: Install Minikube
-      shell: curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
-
-    - name: Start Minikube
-      shell: minikube start
-
-    - name: Load Docker image into Minikube
-      shell: minikube image load data-analytics-app:latest
-
-    - name: Apply Kubernetes deployment
-      command: kubectl apply -f /path/to/k8s/deployment.yaml
-
-    - name: Apply Kubernetes service
-      command: kubectl apply -f /path/to/k8s/service.yaml
